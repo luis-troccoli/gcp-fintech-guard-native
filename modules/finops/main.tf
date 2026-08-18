@@ -30,9 +30,13 @@ resource "google_billing_budget" "budget" {
 
   # The Billing Budgets API requires the numeric project number here,
   # not the project ID string -- passing the ID directly causes a
-  # 400 Invalid Argument at creation time.
+  # 400 Invalid Argument at creation time. It also requires exactly
+  # one of calendar_period or custom_period to be set explicitly;
+  # there is no default, and omitting it is a separate cause of the
+  # same generic 400 error.
   budget_filter {
-    projects = ["projects/${data.google_project.current.number}"]
+    projects        = ["projects/${data.google_project.current.number}"]
+    calendar_period = "MONTH"
   }
 
   amount {
