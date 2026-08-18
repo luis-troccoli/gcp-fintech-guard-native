@@ -1,0 +1,20 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
+*.tfplan
+!*.tfvars.example
+
+# system files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Terraform Logs
+*.log
+.vscode/
+.idea/

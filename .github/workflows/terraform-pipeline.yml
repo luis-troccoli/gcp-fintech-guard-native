@@ -1,0 +1,75 @@
+name: 'Terraform CI/CD Pipeline'
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    name: 'Terraform Infrastructure'
+    runs-on: ubuntu-latest
+
+    # FinOps module inputs, supplied as Terraform variables via
+    # environment. Never hardcoded in .tf files or committed to
+    # version control -- configure these as GitHub repo secrets
+    # (Settings -> Secrets and variables -> Actions).
+    env:
+      TF_VAR_billing_account_id: ${{ secrets.GCP_BILLING_ACCOUNT_ID }}
+      TF_VAR_budget_alert_emails: ${{ secrets.BUDGET_ALERT_EMAILS }}
+      TF_VAR_deployer_principal: serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+    steps:
+      # Check out the repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Authenticate with GCP using Workload Identity Federation --
+      # the OIDC-federated equivalent of the Azure login step, no
+      # long-lived service account keys stored as secrets.
+      - name: GCP Auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Setup Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      # Install the specified version of Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # Initialize the Terraform working directory
+      - name: Terraform Init
+        run: terraform init
+
+      # Check if the code is formatted correctly
+      - name: Terraform Format
+        run: terraform fmt -check -recursive
+
+      # Validate the Terraform configuration files
+      - name: Terraform Validate
+        run: terraform validate
+
+      # Automated security scanning with Checkov.
+      - name: Security Scan (Checkov)
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: terraform
+          soft_fail: false
+
+      # Generate a speculative execution plan
+      - name: Terraform Plan
+        run: terraform plan -input=false
+
+      # Apply the infrastructure changes only on the main branch
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve -input=false

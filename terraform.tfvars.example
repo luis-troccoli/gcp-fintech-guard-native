@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars (or set as GitHub Secrets /
+# TF_VAR_ environment variables in CI) and fill in real values.
+# terraform.tfvars should be in .gitignore -- never commit real
+# project IDs, billing account IDs, or email addresses to a public
+# repo this way.
+
+project_id          = "my-gcp-project-id"
+billing_account_id  = "000000-000000-000000"
+budget_alert_emails = ["you@example.com"]
+deployer_principal  = "serviceAccount:ci-deployer@my-gcp-project-id.iam.gserviceaccount.com"
