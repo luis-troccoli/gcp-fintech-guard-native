@@ -20,6 +20,7 @@ jobs:
     # version control -- configure these as GitHub repo secrets
     # (Settings -> Secrets and variables -> Actions).
     env:
+      TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_billing_account_id: ${{ secrets.GCP_BILLING_ACCOUNT_ID }}
       TF_VAR_budget_alert_emails: ${{ secrets.BUDGET_ALERT_EMAILS }}
       TF_VAR_deployer_principal: serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT }}
