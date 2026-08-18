@@ -65,7 +65,7 @@ The billing budget with progressive thresholds and per-recipient email notificat
 ## 🤖 CI/CD Pipeline
 The pipeline runs, in order: Workload Identity Federation login → `terraform init` → `terraform fmt -check -recursive` → `terraform validate` → Checkov security scan (blocking) → `terraform plan` → `terraform apply` (on `main` only).
 
-Required GitHub repo secrets: `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `GCP_BILLING_ACCOUNT_ID`, `BUDGET_ALERT_EMAILS`.
+Required GitHub repo secrets: \GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`, `GCP_BILLING_ACCOUNT_ID`, `BUDGET_ALERT_EMAILS`, `GCP_BUDGET_CURRENCY`.`
 
 ## 📈 Roadmap
 * **Org Policy:** continuous compliance monitoring, mirroring the source project's Azure Policy roadmap item.
