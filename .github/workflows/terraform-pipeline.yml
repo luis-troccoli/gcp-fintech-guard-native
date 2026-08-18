@@ -23,6 +23,7 @@ jobs:
       TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
       TF_VAR_billing_account_id: ${{ secrets.GCP_BILLING_ACCOUNT_ID }}
       TF_VAR_budget_alert_emails: ${{ secrets.BUDGET_ALERT_EMAILS }}
+      TF_VAR_budget_currency: ${{ secrets.GCP_BUDGET_CURRENCY }}
       TF_VAR_deployer_principal: serviceAccount:${{ secrets.GCP_SERVICE_ACCOUNT }}
 
     steps:
@@ -68,9 +69,13 @@ jobs:
 
       # Generate a speculative execution plan
       - name: Terraform Plan
+        env:
+          TF_LOG: DEBUG
         run: terraform plan -input=false
 
       # Apply the infrastructure changes only on the main branch
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        env:
+          TF_LOG: DEBUG
         run: terraform apply -auto-approve -input=false
