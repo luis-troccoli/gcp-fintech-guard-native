@@ -10,6 +10,10 @@
 # Terraform-supported path to the same multi-recipient alerting
 # Azure's contact_emails gave us directly.
 
+data "google_project" "current" {
+  project_id = var.project_id
+}
+
 resource "google_monitoring_notification_channel" "budget_email" {
   for_each     = toset(var.budget_alert_emails)
   display_name = "budget-alert-${each.value}"
@@ -24,8 +28,11 @@ resource "google_billing_budget" "budget" {
   billing_account = var.billing_account_id
   display_name    = "budget-${var.name_prefix}"
 
+  # The Billing Budgets API requires the numeric project number here,
+  # not the project ID string -- passing the ID directly causes a
+  # 400 Invalid Argument at creation time.
   budget_filter {
-    projects = ["projects/${var.project_id}"]
+    projects = ["projects/${data.google_project.current.number}"]
   }
 
   amount {
