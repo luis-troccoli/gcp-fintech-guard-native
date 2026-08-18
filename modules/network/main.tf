@@ -4,10 +4,17 @@ resource "google_compute_network" "vpc" {
 }
 
 resource "google_compute_subnetwork" "internal" {
-  name          = "internal"
-  network       = google_compute_network.vpc.id
-  region        = var.region
-  ip_cidr_range = "10.0.1.0/24"
+  name                     = "internal"
+  network                  = google_compute_network.vpc.id
+  region                   = var.region
+  ip_cidr_range            = "10.0.1.0/24"
+  private_ip_google_access = true
+
+  log_config {
+    aggregation_interval = "INTERVAL_5_SEC"
+    flow_sampling        = 0.5
+    metadata             = "INCLUDE_ALL_METADATA"
+  }
 }
 
 # GCP VPCs have no implicit allow rules between subnets (unlike Azure's
