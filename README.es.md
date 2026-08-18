@@ -65,7 +65,7 @@ El billing budget con umbrales progresivos y canales de notificación por correo
 ## 🤖 Pipeline de CI/CD
 El pipeline ejecuta, en orden: login por Workload Identity Federation → `terraform init` → `terraform fmt -check -recursive` → `terraform validate` → escaneo de seguridad con Checkov (bloqueante) → `terraform plan` → `terraform apply` (solo en `main`).
 
-Secrets requeridos en el repo de GitHub: \GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`, `GCP_BILLING_ACCOUNT_ID`, `BUDGET_ALERT_EMAILS`, `GCP_BUDGET_CURRENCY`.`
+Secrets requeridos en el repo de GitHub: `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `GCP_PROJECT_ID`, `GCP_BILLING_ACCOUNT_ID`, `BUDGET_ALERT_EMAILS`, `GCP_BUDGET_CURRENCY`.
 
 ## 📈 Roadmap
 * **Org Policy:** monitoreo continuo de cumplimiento, en paralelo con el ítem de Azure Policy del proyecto original.
