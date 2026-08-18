@@ -1,9 +1,14 @@
-# GCP-FinTech-Guard-Native: Modular Cloud Architecture with FinOps Guardrails
+# FinTech-Guard-Native: Modular Cloud Architecture with FinOps Guardrails
 
 **Read this in:** [English](README.md) | [Español](README.es.md) | [Italiano](README.it.md)
 
+[![Terraform CI/CD](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml/badge.svg)](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml)
+
 ## 🎯 Overview
-**GCP-FinTech-Guard-Native** re-implements the same security-and-FinOps baseline as its sibling project on another major cloud, restructured into reusable Terraform modules with a FinOps guardrail, aimed at the cost-and-compliance pressure typical of a financial services workload.
+**FinTech-Guard-Native** re-implements the same security-and-FinOps baseline as its sibling project on another major cloud, restructured into reusable Terraform modules with a FinOps guardrail, aimed at the cost-and-compliance pressure typical of a financial services workload.
+
+## 🏗️ Architecture Diagram
+![Security Architecture](assets/diagrama_arquitectura.jpg)
 
 ## 💡 What This Project Adds
 * **Modular architecture:** `/modules/network`, `/modules/security`, `/modules/finops` instead of flat root-level `.tf` files — each concern is independently reviewable and reusable, which matters more as a codebase grows across teams.
@@ -22,21 +27,31 @@ Two guardrails don't have a like-for-like equivalent on this platform, and are c
 1. **Deletion protection.** The source project's Key Vault purge-protection gives a soft-delete retention window that survives even a delete call. Secret Manager has no equivalent: a destroyed secret version is gone immediately. `prevent_destroy` in this module is a Terraform-level process control (it blocks `terraform destroy`/`apply` from removing the resource unless the lifecycle block is edited first) — it is not a platform-enforced recovery window. Don't treat it as one.
 2. **Private network isolation.** The source project's `public_network_access_enabled = false` + default-deny network ACLs restrict Key Vault's data plane to trusted networks. The closest GCP equivalent is an org-level VPC Service Controls perimeter, which is out of scope for a single project-level Terraform root module. Tracked below as a roadmap item, same as it was on the source platform.
 
-## 🏗️ Component Breakdown
+## 🔍 Component Breakdown
 ### Root
 **`main.tf`** — orchestrates the three modules below (no resource-group-equivalent container to create; `var.project_id` is assumed to already exist).
+![main.tf Analysis](assets/main.png)
+
 **`variables.tf`** — project-wide inputs, including FinOps parameters (no defaults for billing account ID, deployer principal, or alert emails, by design).
+![variables.tf Analysis](assets/variables.png)
+
 **`providers.tf`** — Terraform and `google` provider configuration.
+![providers.tf Analysis](assets/providers.png)
+
 **`outputs.tf`** — aggregates each module's outputs.
+![outputs.tf Analysis](assets/outputs.png)
 
 ### `modules/network`
 VPC, subnet, and four firewall rules (HTTPS allow + deny-all, both directions).
+![network module Analysis](assets/network.png)
 
 ### `modules/security`
 Secret Manager secret with automatic replication, restricted IAM binding, and a `prevent_destroy` lifecycle guard.
+![security module Analysis](assets/security.png)
 
 ### `modules/finops`
 The billing budget with progressive thresholds and per-recipient email notification channels, parameterized by billing account ID, project ID, budget amount/currency, and alert emails.
+![finops module Analysis](assets/finops.png)
 
 ---
 
@@ -51,8 +66,6 @@ The billing budget with progressive thresholds and per-recipient email notificat
 The pipeline runs, in order: Workload Identity Federation login → `terraform init` → `terraform fmt -check -recursive` → `terraform validate` → Checkov security scan (blocking) → `terraform plan` → `terraform apply` (on `main` only).
 
 Required GitHub repo secrets: `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `GCP_BILLING_ACCOUNT_ID`, `BUDGET_ALERT_EMAILS`.
-
-[![Terraform CI/CD](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml/badge.svg)](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml)
 
 ## 📈 Roadmap
 * **Org Policy:** continuous compliance monitoring, mirroring the source project's Azure Policy roadmap item.

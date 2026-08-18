@@ -11,11 +11,11 @@ module "network" {
 
 # 2. Security Module
 module "security" {
-  source              = "./modules/security"
-  project_id          = var.project_id
-  name_prefix         = var.name_prefix
-  labels              = var.labels
-  deployer_principal  = var.deployer_principal
+  source             = "./modules/security"
+  project_id         = var.project_id
+  name_prefix        = var.name_prefix
+  labels             = var.labels
+  deployer_principal = var.deployer_principal
 }
 
 # 3. FinOps Module

@@ -1,9 +1,14 @@
-# GCP-FinTech-Guard-Native: Arquitectura Modular en la Nube con Guardrails de FinOps
+# FinTech-Guard-Native: Arquitectura Modular en la Nube con Guardrails de FinOps
 
 **Léelo en:** [English](README.md) | [Español](README.es.md) | [Italiano](README.it.md)
 
+[![Terraform CI/CD](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml/badge.svg)](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml)
+
 ## 🎯 Resumen
-**GCP-FinTech-Guard-Native** reimplementa la misma base de seguridad y FinOps que su proyecto hermano en otra nube principal, reestructurada en módulos de Terraform reutilizables con un guardrail de FinOps, orientado a la presión de costos y cumplimiento típica de una carga de trabajo de servicios financieros.
+**FinTech-Guard-Native** reimplementa la misma base de seguridad y FinOps que su proyecto hermano en otra nube principal, reestructurada en módulos de Terraform reutilizables con un guardrail de FinOps, orientado a la presión de costos y cumplimiento típica de una carga de trabajo de servicios financieros.
+
+## 🏗️ Diagrama de Arquitectura
+![Arquitectura de Seguridad](assets/diagrama_arquitectura.jpg)
 
 ## 💡 Qué Agrega Este Proyecto
 * **Arquitectura modular:** `/modules/network`, `/modules/security`, `/modules/finops` en lugar de archivos `.tf` planos en la raíz — cada responsabilidad es revisable y reutilizable de forma independiente, algo que importa cada vez más a medida que el código crece entre equipos.
@@ -22,21 +27,31 @@ Dos guardrails no tienen un equivalente exacto en esta plataforma, y se señalan
 1. **Protección contra eliminación.** La purge-protection del Key Vault del proyecto original otorga una ventana de retención de soft-delete que sobrevive incluso a una llamada de eliminación. Secret Manager no tiene equivalente: una versión de secreto destruida desaparece de inmediato. `prevent_destroy` en este módulo es un control de proceso a nivel de Terraform (bloquea que `terraform destroy`/`apply` elimine el recurso a menos que se edite primero el bloque lifecycle) — no es una ventana de recuperación forzada por la plataforma. No lo trates como tal.
 2. **Aislamiento de red privada.** El `public_network_access_enabled = false` + las ACLs de red de denegación por defecto del proyecto original restringen el plano de datos del Key Vault a redes de confianza. El equivalente más cercano en GCP es un perímetro de VPC Service Controls a nivel de organización, fuera del alcance de un módulo raíz de Terraform a nivel de proyecto. Registrado más abajo como ítem del roadmap, igual que en la plataforma original.
 
-## 🏗️ Desglose de Componentes
+## 🔍 Desglose de Componentes
 ### Raíz
 **`main.tf`** — orquesta los tres módulos siguientes (no hay contenedor equivalente a un resource group que crear; se asume que `var.project_id` ya existe).
+![Análisis de main.tf](assets/main.png)
+
 **`variables.tf`** — entradas de todo el proyecto, incluyendo parámetros de FinOps (sin valores por defecto para el ID de facturación, el principal desplegador, ni los correos de alerta, por diseño).
+![Análisis de variables.tf](assets/variables.png)
+
 **`providers.tf`** — configuración de Terraform y del provider `google`.
+![Análisis de providers.tf](assets/providers.png)
+
 **`outputs.tf`** — agrega las salidas de cada módulo.
+![Análisis de outputs.tf](assets/outputs.png)
 
 ### `modules/network`
 VPC, subred, y cuatro reglas de firewall (permiso HTTPS + denegación total, ambas direcciones).
+![Análisis del módulo network](assets/network.png)
 
 ### `modules/security`
 Secreto de Secret Manager con replicación automática, binding de IAM restringido, y un guardrail de ciclo de vida `prevent_destroy`.
+![Análisis del módulo security](assets/security.png)
 
 ### `modules/finops`
 El billing budget con umbrales progresivos y canales de notificación por correo por destinatario, parametrizado por ID de facturación, ID de proyecto, monto/moneda del presupuesto, y correos de alerta.
+![Análisis del módulo finops](assets/finops.png)
 
 ---
 
@@ -51,8 +66,6 @@ El billing budget con umbrales progresivos y canales de notificación por correo
 El pipeline ejecuta, en orden: login por Workload Identity Federation → `terraform init` → `terraform fmt -check -recursive` → `terraform validate` → escaneo de seguridad con Checkov (bloqueante) → `terraform plan` → `terraform apply` (solo en `main`).
 
 Secrets requeridos en el repo de GitHub: `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, `GCP_BILLING_ACCOUNT_ID`, `BUDGET_ALERT_EMAILS`.
-
-[![Terraform CI/CD](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml/badge.svg)](https://github.com/luis-troccoli/gcp-fintech-guard-native/actions/workflows/terraform-pipeline.yml)
 
 ## 📈 Roadmap
 * **Org Policy:** monitoreo continuo de cumplimiento, en paralelo con el ítem de Azure Policy del proyecto original.
